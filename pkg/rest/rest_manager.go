@@ -24,7 +24,11 @@ func NewRESTManager() *RESTManager {
 // MediationServerMessage to channel.
 func (m *RESTManager) HandleRequest(w http.ResponseWriter, r *http.Request) {
 	mediationServerMessage := m.handler.handleAPIRequest(w, r)
-	if r.Method == "POST" {
+	if mediationServerMessage != nil && r.Method == "POST" {
 		m.mediationServerMessageGeneratorChan <- mediationServerMessage
 	}
+}
+
+func (m *RESTManager) ReceiveMessage() <- chan *proto.MediationServerMessage {
+	return m.mediationServerMessageGeneratorChan
 }

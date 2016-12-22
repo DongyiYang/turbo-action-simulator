@@ -78,7 +78,7 @@ func (mc *MediationContainer) listenSend() {
 			return
 		case replyContent := <-mc.config.SendMessageChan:
 			if err = websocket.Message.Send(mc.wsConn, replyContent); err != nil {
-				glog.Errorf("Failed to send reply message via WebSocket: %s", err)
+				glog.Errorf("Failed to send message via WebSocket: %s", err)
 				return
 			}
 		default:

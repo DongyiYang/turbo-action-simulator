@@ -7,15 +7,15 @@ import (
 	"github.com/turbonomic/turbo-action-simulator/pkg/rest/api"
 	"github.com/turbonomic/turbo-action-simulator/pkg/turbomessage"
 
+	"github.com/golang/glog"
 	"github.com/vmturbo/vmturbo-go-sdk/pkg/builder"
 	"github.com/vmturbo/vmturbo-go-sdk/pkg/proto"
-	"github.com/golang/glog"
 )
 
 var (
 	entityTypeConverter map[string]proto.EntityDTO_EntityType = map[string]proto.EntityDTO_EntityType{
 		"VirtualMachine": proto.EntityDTO_VIRTUAL_MACHINE,
-		"Pod":proto.EntityDTO_CONTAINER_POD,
+		"Pod":            proto.EntityDTO_CONTAINER_POD,
 	}
 
 	actionTypeConverter map[string]proto.ActionItemDTO_ActionType = map[string]proto.ActionItemDTO_ActionType{
@@ -23,9 +23,9 @@ var (
 	}
 )
 
-
 func TransformActionRequest(actionAPIRequest *api.Action) (*proto.MediationServerMessage, error) {
-	tSETypeString:=actionAPIRequest.TargetEntityType
+	tSETypeString := actionAPIRequest.TargetEntityType
+	glog.V(3).Infof("tType :%s", tSETypeString)
 	if tSETypeString == "" {
 		return nil, fmt.Errorf("Target entity type is not provided.")
 	}
@@ -66,23 +66,33 @@ func TransformActionRequest(actionAPIRequest *api.Action) (*proto.MediationServe
 		//TODO need to change go-sdk
 		if newEntityType == proto.EntityDTO_VIRTUAL_MACHINE {
 			virtualMachineData := &proto.EntityDTO_VirtualMachineData{
-				IpAddress:[]string{actionAPIRequest.MoveSpec.MoveDestinationIP},
+				IpAddress: []string{actionAPIRequest.MoveSpec.MoveDestinationIP},
 			}
 			newEntityDTO.VirtualMachineData = virtualMachineData
 		}
 		actionItemDTOBuilder.NewSE(newEntityDTO)
 	}
-	actionItemDTO, err :=actionItemDTOBuilder.Build()
-	if (err != nil) {
-		return nil ,err
+	actionItemDTO, err := actionItemDTOBuilder.Build()
+	if err != nil {
+		return nil, err
 	}
 	actionExecutionDTO, err := turbomessage.NewActionExecutionDTOBuilder(actionType).
 		ActionItem(actionItemDTO).Build()
 	if err != nil {
 		return nil, err
 	}
-
-	actionRequest := turbomessage.NewActionRequestBuilder(actionExecutionDTO).Build()
+	pType := actionAPIRequest.ProbeType
+	if pType == "" {
+		pType = turbomessage.DefaultProbeType
+	}
+	accountValue := actionAPIRequest.Account
+	if accountValue == nil || len(accountValue) == 0 {
+		accountValue = turbomessage.DefaultAccountValues
+	}
+	actionRequest, err := turbomessage.NewActionRequestBuilder(pType, accountValue, actionExecutionDTO).Build()
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO message ID is a random number in [0, 1000)
 	messageID := rand.Int31n(1000)

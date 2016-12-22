@@ -9,16 +9,19 @@ import (
 
 	goproto "github.com/golang/protobuf/proto"
 	"github.com/golang/glog"
+	"github.com/turbonomic/turbo-action-simulator/pkg/rest"
 )
 
 type TurboHub struct {
 	mediationContainer *mediationcontainer.MediationContainer
+	restManager *rest.RESTManager
 	StopChan           chan struct{}
 }
 
-func NewTurboHub(mc *mediationcontainer.MediationContainer) *TurboHub {
+func NewTurboHub(mc *mediationcontainer.MediationContainer, rm *rest.RESTManager) *TurboHub {
 	return &TurboHub{
 		mediationContainer: mc,
+		restManager: rm,
 		StopChan:           make(chan struct{}),
 	}
 }
@@ -27,10 +30,16 @@ func (h *TurboHub) Run() {
 	go func() {
 		for {
 			select {
-			case recvMsg := <-h.mediationContainer.ReceiveMessage():
-				err := h.handleRawClientMessage(recvMsg)
+			case webSocketReceivedMessage := <-h.mediationContainer.ReceiveMessage():
+				err := h.handleRawClientMessage(webSocketReceivedMessage)
 				if err != nil {
-					fmt.Errorf("Error handle received client message: %s", err)
+					glog.Errorf("Error handling received client message: %s", err)
+				}
+			case restAPIReceivedMessage := <-h.restManager.ReceiveMessage():
+				err := h.sendServerMessage(restAPIReceivedMessage)
+				if err != nil {
+					glog.Errorf("Error forwarding mediation server message from REST API to " +
+						"WebSocket: %s", err)
 				}
 			case <-h.StopChan:
 				return
@@ -41,6 +50,7 @@ func (h *TurboHub) Run() {
 
 // Marshall the message into byte array and send the message via mediation container.
 func (h *TurboHub) sendServerMessage(serverMsg *proto.MediationServerMessage) error{
+	glog.V(3).Infof("Send out to WebSocket: %++v", serverMsg)
 	rawServerMsg, err := marshallServerMessage(serverMsg)
 	if err != nil {
 		return err

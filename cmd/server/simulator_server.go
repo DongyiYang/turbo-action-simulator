@@ -22,7 +22,7 @@ func (s *SimulatorServer) Run() {
 
 	restManager := rest.NewRESTManager()
 
-	turboHub := turbohub.NewTurboHub(mediationContainer)
+	turboHub := turbohub.NewTurboHub(mediationContainer, restManager)
 	turboHub.Run()
 
 	router := mux.NewRouter()
