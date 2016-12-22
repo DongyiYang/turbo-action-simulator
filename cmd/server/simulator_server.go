@@ -44,10 +44,10 @@ func (s *SimulatorServer) Run() {
 
 	// Register routes and handle function for http REST request.
 	for _, route := range rest.RoutesPaths {
-		r := router.HandleFunc(route.Path, restManager.HandleRequest)
-		for _, method := range route.Method {
-			r.Methods(method)
-		}
+		router.HandleFunc(route.Path, restManager.HandleRequest)
+		//for _, method := range route.Method {
+		//	r.Methods(method)
+		//}
 	}
 
 	glog.V(2).Info("Turbo simulator is started.")
