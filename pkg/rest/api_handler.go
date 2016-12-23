@@ -12,8 +12,8 @@ import (
 
 	"github.com/vmturbo/vmturbo-go-sdk/pkg/proto"
 
-	"github.com/turbonomic/turbo-action-simulator/pkg/rest/api"
-	"github.com/turbonomic/turbo-action-simulator/pkg/converter"
+	"github.com/turbonomic/turbo-simulator/pkg/rest/api"
+	"github.com/turbonomic/turbo-simulator/pkg/converter"
 )
 
 // Handle API request, return the related MeditationServerMessage instance.

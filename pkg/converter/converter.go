@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/turbonomic/turbo-action-simulator/pkg/rest/api"
-	"github.com/turbonomic/turbo-action-simulator/pkg/turbomessage"
+	"github.com/turbonomic/turbo-simulator/pkg/rest/api"
+	"github.com/turbonomic/turbo-simulator/pkg/turbomessage"
 
 	"github.com/golang/glog"
 	"github.com/vmturbo/vmturbo-go-sdk/pkg/builder"

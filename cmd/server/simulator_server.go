@@ -5,12 +5,13 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/turbonomic/turbo-action-simulator/pkg/mediationcontainer"
+	"github.com/turbonomic/turbo-simulator/pkg/mediationcontainer"
+	"github.com/turbonomic/turbo-simulator/pkg/rest"
+	"github.com/turbonomic/turbo-simulator/pkg/turbohub"
 
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
-	"github.com/turbonomic/turbo-action-simulator/pkg/rest"
-	"github.com/turbonomic/turbo-action-simulator/pkg/turbohub"
+
 	"golang.org/x/net/websocket"
 )
 

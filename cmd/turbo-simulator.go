@@ -3,7 +3,7 @@ package main
 import(
 	"flag"
 
-	"github.com/turbonomic/turbo-action-simulator/cmd/server"
+	"github.com/turbonomic/turbo-simulator/cmd/server"
 
 )
 
