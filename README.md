@@ -1,5 +1,7 @@
 # turbo-simulator
 
+[![Build Status](https://travis-ci.org/DongyiYang/turbo-simulator.svg?branch=master)](https://travis-ci.org/DongyiYang/turbo-simulator)
+
 ## What is turbo-simulator
 
 Turbo-simulator is used to simulate Turbonomic server and test Turbonomic SDK probes.
