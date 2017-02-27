@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/golang/glog"
 
-	"github.com/vmturbo/vmturbo-go-sdk/pkg/proto"
+	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
 
 	"github.com/turbonomic/turbo-simulator/pkg/rest/api"
 	"github.com/turbonomic/turbo-simulator/pkg/converter"

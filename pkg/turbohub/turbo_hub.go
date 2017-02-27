@@ -3,7 +3,7 @@ package turbohub
 import (
 	"fmt"
 
-	"github.com/vmturbo/vmturbo-go-sdk/pkg/proto"
+	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
 
 	"github.com/turbonomic/turbo-simulator/pkg/mediationcontainer"
 	"github.com/turbonomic/turbo-simulator/pkg/rest"
@@ -72,18 +72,13 @@ func (h *TurboHub) handleRawClientMessage(rawMessage []byte) error {
 // Forward message to different component based on message type.
 func (h *TurboHub) forwardClientMessage(clientMsg *proto.MediationClientMessage) {
 	glog.V(3).Infof("Get client message: %++v", clientMsg)
-	if clientMsg.ValidationResponse != nil {
-		// TODO
-	} else if clientMsg.DiscoveryResponse != nil {
-		// TODO
-	} else if clientMsg.KeepAlive != nil {
-		// TODO
-	} else if clientMsg.ActionProgress != nil {
-		// TODO
-	} else if clientMsg.ActionResponse != nil {
-		// TODO
+	switch clientMsg.MediationClientMessage.(type) {
+	case *proto.MediationClientMessage_ValidationResponse: // TODO
+	case *proto.MediationClientMessage_DiscoveryResponse: // TODO
+	case *proto.MediationClientMessage_KeepAlive: // TODO
+	case *proto.MediationClientMessage_ActionResponse: // TODO
+	case *proto.MediationClientMessage_ActionProgress: // TODO
 	}
-
 }
 
 func unmarshallClientMessage(rawMessage []byte) (*proto.MediationClientMessage, error) {

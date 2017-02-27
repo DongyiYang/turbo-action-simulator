@@ -1,14 +1,15 @@
 package turbomessage
 
 import (
-	"github.com/vmturbo/vmturbo-go-sdk/pkg/proto"
+	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
 )
 
 type MediationServerMessageBuilder struct {
-	validationRequest *proto.ValidationRequest
-	discoveryRequest  *proto.DiscoveryRequest
-	actionRequest     *proto.ActionRequest
-	messageID         *int32
+	validationRequest     *proto.ValidationRequest
+	discoveryRequest      *proto.DiscoveryRequest
+	actionRequest         *proto.ActionRequest
+	interruptionOperation *int32
+	messageID             *int32
 }
 
 func NewMediationServerMessageBuilder(messageID int32) *MediationServerMessageBuilder {
@@ -18,12 +19,29 @@ func NewMediationServerMessageBuilder(messageID int32) *MediationServerMessageBu
 }
 
 func (mb *MediationServerMessageBuilder) Build() *proto.MediationServerMessage {
-	return &proto.MediationServerMessage{
-		ValidationRequest: mb.validationRequest,
-		DiscoveryRequest:  mb.discoveryRequest,
-		ActionRequest:     mb.actionRequest,
-		MessageID:         mb.messageID,
+	serverMessage := &proto.MediationServerMessage{
+		MessageID: mb.messageID,
 	}
+
+	if mb.validationRequest != nil {
+		serverMessage.MediationServerMessage = &proto.MediationServerMessage_ValidationRequest{
+			ValidationRequest: mb.validationRequest,
+		}
+	} else if mb.discoveryRequest != nil {
+		serverMessage.MediationServerMessage = &proto.MediationServerMessage_DiscoveryRequest{
+			DiscoveryRequest: mb.discoveryRequest,
+		}
+	} else if mb.actionRequest != nil {
+		serverMessage.MediationServerMessage = &proto.MediationServerMessage_ActionRequest{
+			ActionRequest: mb.actionRequest,
+		}
+	} else if mb.interruptionOperation != nil {
+		serverMessage.MediationServerMessage = &proto.MediationServerMessage_InterruptOperation{
+			InterruptOperation: *mb.interruptionOperation,
+		}
+	}
+
+	return serverMessage
 }
 
 func (mb *MediationServerMessageBuilder) ActionRequest(
@@ -41,5 +59,11 @@ func (mb *MediationServerMessageBuilder) ValidationRequest(
 func (mb *MediationServerMessageBuilder) DiscoveryRequest(
 	discoveryRequest *proto.DiscoveryRequest) *MediationServerMessageBuilder {
 	mb.discoveryRequest = discoveryRequest
+	return mb
+}
+
+func (mb *MediationServerMessageBuilder) InterruptionOperation(
+	operation int32) *MediationServerMessageBuilder {
+	mb.interruptionOperation = &operation
 	return mb
 }

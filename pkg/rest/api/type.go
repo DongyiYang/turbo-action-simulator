@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/vmturbo/vmturbo-go-sdk/pkg/proto"
+	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
 )
 
 type Action struct {

@@ -8,8 +8,8 @@ import (
 	"github.com/turbonomic/turbo-simulator/pkg/turbomessage"
 
 	"github.com/golang/glog"
-	"github.com/vmturbo/vmturbo-go-sdk/pkg/builder"
-	"github.com/vmturbo/vmturbo-go-sdk/pkg/proto"
+	"github.com/turbonomic/turbo-go-sdk/pkg/builder"
+	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
 )
 
 var (
@@ -58,18 +58,21 @@ func TransformActionRequest(actionAPIRequest *api.Action) (*proto.MediationServe
 				actionAPIRequest.MoveSpec.DestinationEntityType)
 		}
 
-		newEntityDTO, err := builder.NewEntityDTOBuilder(newEntityType,
-			actionAPIRequest.MoveSpec.DestinationEntityID).Create()
-		if err != nil {
-			return nil, err
-		}
+		newEntityDTOBuilder := builder.NewEntityDTOBuilder(newEntityType,
+			actionAPIRequest.MoveSpec.DestinationEntityID)
 		//TODO need to change go-sdk
 		if newEntityType == proto.EntityDTO_VIRTUAL_MACHINE {
 			virtualMachineData := &proto.EntityDTO_VirtualMachineData{
 				IpAddress: []string{actionAPIRequest.MoveSpec.MoveDestinationIP},
 			}
-			newEntityDTO.VirtualMachineData = virtualMachineData
+			newEntityDTOBuilder.VirtualMachineData(virtualMachineData)
 		}
+
+		newEntityDTO, err := newEntityDTOBuilder.Create()
+		if err != nil {
+			return nil, err
+		}
+
 		actionItemDTOBuilder.NewSE(newEntityDTO)
 	}
 	actionItemDTO, err := actionItemDTOBuilder.Build()

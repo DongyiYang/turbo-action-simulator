@@ -3,7 +3,7 @@ package turbomessage
 import (
 	"fmt"
 
-	"github.com/vmturbo/vmturbo-go-sdk/pkg/proto"
+	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
 	"crypto/rand"
 )
 

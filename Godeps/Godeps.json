@@ -1,39 +1,38 @@
 {
 	"ImportPath": "github.com/turbonomic/turbo-simulator",
 	"GoVersion": "go1.7",
-	"GodepVersion": "v75",
+	"GodepVersion": "v79",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/golang/glog",
-			"Rev": "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
+			"Rev": "44145f04b68cf362d9c4df2182967c2275eaefed"
 		},
 		{
 			"ImportPath": "github.com/golang/protobuf/proto",
-			"Rev": "8ee79997227bf9b34611aee7946ae64735e6fd93"
+			"Rev": "8616e8ee5e20a1704615e6c8d7afcdac06087a67"
+		},
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
 		},
 		{
 			"ImportPath": "github.com/gorilla/mux",
-			"Comment": "v1.1-27-g757bef9",
-			"Rev": "757bef944d0f21880861c2dd9c871ca543023cba"
+			"Rev": "8096f47503459bcc74d1f4c487b7e6e42e5746b5"
 		},
 		{
-			"ImportPath": "github.com/vmturbo/vmturbo-go-sdk/pkg/builder",
-			"Rev": "81a787d2bd6253e677c1586ab141156c2774dcff"
+			"ImportPath": "github.com/turbonomic/turbo-go-sdk/pkg/builder",
+			"Rev": "506fd4d9ef74e137eff296c30f88751c3153b915"
 		},
 		{
-			"ImportPath": "github.com/vmturbo/vmturbo-go-sdk/pkg/common",
-			"Rev": "81a787d2bd6253e677c1586ab141156c2774dcff"
-		},
-		{
-			"ImportPath": "github.com/vmturbo/vmturbo-go-sdk/pkg/proto",
-			"Rev": "81a787d2bd6253e677c1586ab141156c2774dcff"
+			"ImportPath": "github.com/turbonomic/turbo-go-sdk/pkg/proto",
+			"Rev": "506fd4d9ef74e137eff296c30f88751c3153b915"
 		},
 		{
 			"ImportPath": "golang.org/x/net/websocket",
-			"Rev": "45e771701b814666a7eb299e6c7a57d0b1799e91"
+			"Rev": "e90d6d0afc4c315a0d87a568ae68577cc15149a0"
 		}
 	]
 }
