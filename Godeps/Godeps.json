@@ -24,11 +24,11 @@
 		},
 		{
 			"ImportPath": "github.com/turbonomic/turbo-go-sdk/pkg/builder",
-			"Rev": "506fd4d9ef74e137eff296c30f88751c3153b915"
+			"Rev": "c08069806a422abc485233fddc644ea22f8c51d8"
 		},
 		{
 			"ImportPath": "github.com/turbonomic/turbo-go-sdk/pkg/proto",
-			"Rev": "506fd4d9ef74e137eff296c30f88751c3153b915"
+			"Rev": "c08069806a422abc485233fddc644ea22f8c51d8"
 		},
 		{
 			"ImportPath": "golang.org/x/net/websocket",
