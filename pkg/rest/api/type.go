@@ -5,12 +5,12 @@ import (
 )
 
 type Action struct {
-	ProbeType        string              `json:"probeType,omitempty"`
+	ProbeType        string                `json:"probeType,omitempty"`
 	Account          []*proto.AccountValue `json:"account,omitempty"`
-	ActionType       string              `json:"type,omitempty"`
-	TargetEntityType string              `json:"entityType,omitempty"`
-	TargetEntityID   string              `json:"entityID,omitempty"`
-	MoveSpec         *MoveSpec           `json:"moveSpec,omitempty"`
+	ActionType       string                `json:"type,omitempty"`
+	TargetEntityType string                `json:"entityType,omitempty"`
+	TargetEntityID   string                `json:"entityID,omitempty"`
+	MoveSpec         *MoveSpec             `json:"moveSpec,omitempty"`
 }
 
 //type AccountValue struct {

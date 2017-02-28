@@ -1,34 +1,30 @@
 package rest
 
 import (
-	//"fmt"
-	"net/http"
-	//"strings"
 	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
+	"net/http"
 )
 
-type RESTManager struct{
+type RESTManager struct {
 	handler *APIHandler
 
 	mediationServerMessageGeneratorChan chan *proto.MediationServerMessage
 }
 
 func NewRESTManager() *RESTManager {
+	mediationServerMessageGeneratorChan := make(chan *proto.MediationServerMessage)
 	return &RESTManager{
-		NewAPIHandler(),
-		make(chan *proto.MediationServerMessage),
+		NewAPIHandler(mediationServerMessageGeneratorChan),
+		mediationServerMessageGeneratorChan,
 	}
 }
 
-// Forward an API request to API handler. If this is a POST request, forward the generated
-// MediationServerMessage to channel.
+// Forward an API request to API handler.
+// If this is a POST request, forward the generated MediationServerMessage to channel.
 func (m *RESTManager) HandleRequest(w http.ResponseWriter, r *http.Request) {
-	mediationServerMessage := m.handler.handleAPIRequest(w, r)
-	if mediationServerMessage != nil && r.Method == "POST" {
-		m.mediationServerMessageGeneratorChan <- mediationServerMessage
-	}
+	m.handler.handleAPIRequest(w, r)
 }
 
-func (m *RESTManager) ReceiveMessage() <- chan *proto.MediationServerMessage {
+func (m *RESTManager) ReceiveMessage() <-chan *proto.MediationServerMessage {
 	return m.mediationServerMessageGeneratorChan
 }
