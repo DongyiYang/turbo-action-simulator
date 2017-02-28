@@ -8,6 +8,7 @@ import (
 	"github.com/turbonomic/turbo-simulator/pkg/mediationcontainer"
 	"github.com/turbonomic/turbo-simulator/pkg/rest"
 
+	"errors"
 	"github.com/golang/glog"
 	goproto "github.com/golang/protobuf/proto"
 )
@@ -50,6 +51,9 @@ func (h *TurboHub) Run() {
 
 // Marshall the message into byte array and send the message via mediation container.
 func (h *TurboHub) sendServerMessage(serverMsg *proto.MediationServerMessage) error {
+	if h.mediationContainer.Status != mediationcontainer.StatusReady {
+		return errors.New("Medation container is not ready.")
+	}
 	glog.V(3).Infof("Send out to WebSocket: %++v", serverMsg)
 	rawServerMsg, err := marshallServerMessage(serverMsg)
 	if err != nil {
