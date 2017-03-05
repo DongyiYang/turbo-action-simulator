@@ -10,9 +10,9 @@ import (
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 
-	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
+	//"github.com/turbonomic/turbo-go-sdk/pkg/proto"
 
-	"github.com/turbonomic/turbo-simulator/pkg/converter"
+	//"github.com/turbonomic/turbo-simulator/pkg/converter"
 	"github.com/turbonomic/turbo-simulator/pkg/rest/api"
 )
 
@@ -20,14 +20,14 @@ import (
 type TurboHandleFunc func(w http.ResponseWriter, r *http.Request) error
 
 type APIHandler struct {
-	handlers map[string]TurboHandleFunc
+	handlers               map[string]TurboHandleFunc
 
-	mediationServerMessageGeneratorChan chan *proto.MediationServerMessage
+	apiObjectGeneratorChan chan api.APIObject
 }
 
-func NewAPIHandler(mediationServerMessageGeneratorChan chan *proto.MediationServerMessage) *APIHandler {
+func NewAPIHandler(apiObjectGeneratorChan chan api.APIObject) *APIHandler {
 	apiHandler := &APIHandler{
-		mediationServerMessageGeneratorChan: mediationServerMessageGeneratorChan,
+		apiObjectGeneratorChan: apiObjectGeneratorChan,
 	}
 	// register handlers
 	handlers := make(map[string]TurboHandleFunc)
@@ -96,14 +96,15 @@ func (h *APIHandler) handleActionRequest(w http.ResponseWriter, r *http.Request)
 		}
 		glog.V(3).Infof("Created a new action instance from REST API: %++v", action)
 
-		serverMessage, err := converter.TransformActionRequest(&action)
-		if err != nil {
-			return fmt.Errorf("Failed to create mediation server message based on given request: %s",
-				err)
-		}
-		glog.V(3).Infof("Build mediation server message: %+v", serverMessage)
-		// Send message to channel, which will then be passed ot rest manager.
-		h.mediationServerMessageGeneratorChan <- serverMessage
+		//serverMessage, err := converter.TransformActionRequest(&action)
+		//if err != nil {
+		//	return fmt.Errorf("Failed to create mediation server message based on given request: %s",
+		//		err)
+		//}
+		//glog.V(3).Infof("Build mediation server message: %+v", serverMessage)
+
+		// Send action instance to channel, which will then be passed ot rest manager.
+		h.apiObjectGeneratorChan <- action
 		return nil
 	case "DELETE":
 		// TODO delete msg.

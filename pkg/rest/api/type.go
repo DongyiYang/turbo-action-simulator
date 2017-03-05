@@ -4,7 +4,12 @@ import (
 	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
 )
 
+type TypeMeta struct {
+	Kind string `json:"kind,omitempty"`
+}
+
 type Action struct {
+	TypeMeta         `json:",inline"`
 	ProbeType        string                `json:"probeType,omitempty"`
 	Account          []*proto.AccountValue `json:"account,omitempty"`
 	ActionType       string                `json:"type,omitempty"`

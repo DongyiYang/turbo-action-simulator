@@ -1,16 +1,18 @@
 package turbohub
 
 import (
+	"errors"
 	"fmt"
+	"reflect"
+
+	"github.com/turbonomic/turbo-simulator/pkg/converter"
+	"github.com/turbonomic/turbo-simulator/pkg/mediationcontainer"
+	"github.com/turbonomic/turbo-simulator/pkg/rest"
+	"github.com/turbonomic/turbo-simulator/pkg/rest/api"
 
 	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
 
-	"github.com/turbonomic/turbo-simulator/pkg/mediationcontainer"
-	"github.com/turbonomic/turbo-simulator/pkg/rest"
-
-	"errors"
 	"github.com/golang/glog"
-	goproto "github.com/golang/protobuf/proto"
 )
 
 type TurboHub struct {
@@ -31,16 +33,15 @@ func (h *TurboHub) Run() {
 	go func() {
 		for {
 			select {
-			case webSocketReceivedMessage := <-h.mediationContainer.ReceiveMessage():
-				err := h.handleRawClientMessage(webSocketReceivedMessage)
+			case webSocketReceivedMessage := <-h.mediationContainer.ReceiveMediationClientMessage():
+				err := h.forwardClientMessage(webSocketReceivedMessage)
 				if err != nil {
 					glog.Errorf("Error handling received client message: %s", err)
 				}
-			case restAPIReceivedMessage := <-h.restManager.ReceiveMessage():
-				err := h.sendServerMessage(restAPIReceivedMessage)
+			case apiObjectReceived := <-h.restManager.ReceiveMessage():
+				err := h.distributeAPIRequest(apiObjectReceived)
 				if err != nil {
-					glog.Errorf("Error forwarding mediation server message from REST API to "+
-						"WebSocket: %s", err)
+					glog.Errorf("Error: %s", err)
 				}
 			case <-h.StopChan:
 				return
@@ -49,32 +50,39 @@ func (h *TurboHub) Run() {
 	}()
 }
 
-// Marshall the message into byte array and send the message via mediation container.
-func (h *TurboHub) sendServerMessage(serverMsg *proto.MediationServerMessage) error {
-	if h.mediationContainer.Status != mediationcontainer.StatusReady {
-		return errors.New("Medation container is not ready.")
+// Find the type of each APIObject, then distribute them accordingly.
+func (h *TurboHub) distributeAPIRequest(apiObj api.APIObject) error {
+	switch apiObj.(type) {
+	case api.Action:
+		action := apiObj.(api.Action)
+		serverMessage, err := converter.TransformActionRequest(&action)
+		if err != nil {
+			return fmt.Errorf("Failed to create mediation server message based on given action request: %s",
+				err)
+		}
+		glog.V(4).Infof("Action request is generated: %++v", serverMessage)
+		err = h.sendServerMessage(serverMessage)
+		if err != nil {
+			return fmt.Errorf("Failed to forward mediation server message from REST API to "+
+				"WebSocket: %s", err)
+		}
+	default:
+		glog.Errorf("API object type %s is not supported", reflect.TypeOf(apiObj))
 	}
-	glog.V(3).Infof("Send out to WebSocket: %++v", serverMsg)
-	rawServerMsg, err := marshallServerMessage(serverMsg)
-	if err != nil {
-		return err
-	}
-	h.mediationContainer.SendMessage(rawServerMsg)
 	return nil
 }
 
-// Get raw message from mediation container and unmarshall it into MediationClientMessage.
-func (h *TurboHub) handleRawClientMessage(rawMessage []byte) error {
-	clientMessage, err := unmarshallClientMessage(rawMessage)
-	if err != nil {
-		return err
+// Send the message via mediation container.
+func (h *TurboHub) sendServerMessage(serverMsg *proto.MediationServerMessage) error {
+	if h.mediationContainer == nil {
+		return errors.New("Medation container is not set")
 	}
-	h.forwardClientMessage(clientMessage)
-	return nil
+	err := h.mediationContainer.SendServerMessage(serverMsg)
+	return err
 }
 
 // Forward message to different component based on message type.
-func (h *TurboHub) forwardClientMessage(clientMsg *proto.MediationClientMessage) {
+func (h *TurboHub) forwardClientMessage(clientMsg *proto.MediationClientMessage) error {
 	glog.V(3).Infof("Get client message: %++v", clientMsg)
 	switch clientMsg.MediationClientMessage.(type) {
 	case *proto.MediationClientMessage_ValidationResponse: // TODO
@@ -83,22 +91,5 @@ func (h *TurboHub) forwardClientMessage(clientMsg *proto.MediationClientMessage)
 	case *proto.MediationClientMessage_ActionResponse: // TODO
 	case *proto.MediationClientMessage_ActionProgress: // TODO
 	}
-}
-
-func unmarshallClientMessage(rawMessage []byte) (*proto.MediationClientMessage, error) {
-	clientMessage := &proto.MediationClientMessage{}
-	err := goproto.Unmarshal(rawMessage, clientMessage)
-	if err != nil {
-		return nil, fmt.Errorf("Cannot unmarshall: %s", err)
-	}
-
-	return clientMessage, nil
-}
-
-func marshallServerMessage(serverMessage *proto.MediationServerMessage) ([]byte, error) {
-	marshalled, err := goproto.Marshal(serverMessage)
-	if err != nil {
-		return nil, fmt.Errorf("Error marshalling server message %+v", serverMessage)
-	}
-	return marshalled, nil
+	return nil
 }

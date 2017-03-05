@@ -24,11 +24,19 @@
 		},
 		{
 			"ImportPath": "github.com/turbonomic/turbo-go-sdk/pkg/builder",
-			"Rev": "c08069806a422abc485233fddc644ea22f8c51d8"
+			"Rev": "f75efafc4a27106f437b01549d9e466b6e59ef85"
 		},
 		{
 			"ImportPath": "github.com/turbonomic/turbo-go-sdk/pkg/proto",
-			"Rev": "c08069806a422abc485233fddc644ea22f8c51d8"
+			"Rev": "f75efafc4a27106f437b01549d9e466b6e59ef85"
+		},
+		{
+			"ImportPath": "github.com/turbonomic/turbo-go-sdk/pkg/version",
+			"Rev": "f75efafc4a27106f437b01549d9e466b6e59ef85"
+		},
+		{
+			"ImportPath": "github.com/turbonomic/turbo-go-sdk/util/rand",
+			"Rev": "f75efafc4a27106f437b01549d9e466b6e59ef85"
 		},
 		{
 			"ImportPath": "golang.org/x/net/websocket",

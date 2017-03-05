@@ -28,14 +28,14 @@ func (s *SimulatorServer) Run() {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/vmturbo/remoteMediation", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("request is %+v\n", r)
+		glog.V(4).Infof("request is %+v\n", r)
 		headers := r.Header
 		// TODO maybe there is a better way to check this is a WebSocket connection.
 		if _, exist := headers["Sec-Websocket-Key"]; exist {
-			fmt.Println("This is a websocket connection.")
+			glog.V(4).Info("This is a websocket connection.")
 			websocket.Handler(mediationContainer.OnWebSocketConnected).ServeHTTP(w, r)
 		} else {
-			fmt.Println("A http connection.")
+			glog.V(4).Info("A http connection.")
 		}
 	})
 

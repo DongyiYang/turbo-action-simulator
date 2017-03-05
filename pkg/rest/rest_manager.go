@@ -1,21 +1,22 @@
 package rest
 
 import (
-	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
 	"net/http"
+
+	"github.com/turbonomic/turbo-simulator/pkg/rest/api"
 )
 
 type RESTManager struct {
 	handler *APIHandler
 
-	mediationServerMessageGeneratorChan chan *proto.MediationServerMessage
+	apiObjectGeneratorChan chan api.APIObject
 }
 
 func NewRESTManager() *RESTManager {
-	mediationServerMessageGeneratorChan := make(chan *proto.MediationServerMessage)
+	apiObjectGeneratorChan := make(chan api.APIObject)
 	return &RESTManager{
-		NewAPIHandler(mediationServerMessageGeneratorChan),
-		mediationServerMessageGeneratorChan,
+		NewAPIHandler(apiObjectGeneratorChan),
+		apiObjectGeneratorChan,
 	}
 }
 
@@ -25,6 +26,6 @@ func (m *RESTManager) HandleRequest(w http.ResponseWriter, r *http.Request) {
 	m.handler.handleAPIRequest(w, r)
 }
 
-func (m *RESTManager) ReceiveMessage() <-chan *proto.MediationServerMessage {
-	return m.mediationServerMessageGeneratorChan
+func (m *RESTManager) ReceiveMessage() <-chan api.APIObject {
+	return m.apiObjectGeneratorChan
 }
