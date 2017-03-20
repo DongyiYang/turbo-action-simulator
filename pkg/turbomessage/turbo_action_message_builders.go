@@ -154,6 +154,7 @@ func (aib *ActionItemDTOBuilder) TargetSE(target *proto.EntityDTO) *ActionItemDT
 	aib.targetSE = target
 	return aib
 }
+
 func (aib *ActionItemDTOBuilder) NewSE(new *proto.EntityDTO) *ActionItemDTOBuilder {
 	if aib.err != nil {
 		return aib
@@ -162,6 +163,16 @@ func (aib *ActionItemDTOBuilder) NewSE(new *proto.EntityDTO) *ActionItemDTOBuild
 	return aib
 }
 
+func (aib *ActionItemDTOBuilder) Provider(providerInfo *proto.ActionItemDTO_ProviderInfo) *ActionItemDTOBuilder {
+	if aib.err != nil {
+		return aib
+	}
+	if aib.providers == nil {
+		aib.providers = []*proto.ActionItemDTO_ProviderInfo{}
+	}
+	aib.providers = append(aib.providers, providerInfo)
+	return aib
+}
 
 func randUUID() string {
 	b := make([]byte, 8)

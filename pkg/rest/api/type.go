@@ -15,7 +15,8 @@ type Action struct {
 	ActionType       string                `json:"type,omitempty"`
 	TargetEntityType string                `json:"entityType,omitempty"`
 	TargetEntityID   string                `json:"entityID,omitempty"`
-	MoveSpec         *MoveSpec             `json:"moveSpec,omitempty"`
+	MoveSpec         MoveSpec              `json:"moveSpec,omitempty"`
+	ScaleSpec        ScaleSpec             `json:"scaleSpec,omitempty"`
 }
 
 //type AccountValue struct {
@@ -25,7 +26,18 @@ type Action struct {
 //}
 
 type MoveSpec struct {
-	DestinationEntityType string `destinationEntityType,omitempty`
-	DestinationEntityID   string `destinationEntityID,omitempty`
+	DestinationEntityType string `json:"destinationEntityType,omitempty"`
+	DestinationEntityID   string `josn:"destinationEntityID,omitempty"`
 	MoveDestinationIP     string `json:"destinationIP,omitempty"`
+}
+
+type ScaleSpec struct {
+	//Provider ProviderInfo `json:"provider,omitempty"`
+	ProviderEntityType string `json:"providerEntityType,omitempty"`
+	ProviderEntityID   string `json:"providerEntityID,omitempty"`
+}
+
+type ProviderInfo struct {
+	ProviderEntityType string `json:"providerEntityType,omitempty"`
+	ProviderEntityID   string `json:"providerEntityID,omitempty"`
 }

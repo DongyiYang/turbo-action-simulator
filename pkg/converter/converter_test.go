@@ -38,7 +38,7 @@ func TestGetMovingTarget(t *testing.T) {
 	}
 
 	for _, item := range table {
-		moveSpec := &api.MoveSpec{
+		moveSpec := api.MoveSpec{
 			DestinationEntityType: item.DestinationEntityType,
 			DestinationEntityID:   item.DestinationEntityID,
 			MoveDestinationIP:     item.MoveDestinationIP,

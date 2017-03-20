@@ -19,11 +19,13 @@ var (
 	entityTypeConverter map[string]proto.EntityDTO_EntityType = map[string]proto.EntityDTO_EntityType{
 		"VirtualMachine": proto.EntityDTO_VIRTUAL_MACHINE,
 		"Pod":            proto.EntityDTO_CONTAINER_POD,
+		"Application":    proto.EntityDTO_APPLICATION,
 	}
 
 	// Map a string to ActionItemDTO_ActionType
 	actionTypeConverter map[string]proto.ActionItemDTO_ActionType = map[string]proto.ActionItemDTO_ActionType{
-		"move": proto.ActionItemDTO_MOVE,
+		"move":      proto.ActionItemDTO_MOVE,
+		"provision": proto.ActionItemDTO_PROVISION,
 	}
 )
 
@@ -31,7 +33,7 @@ var (
 func TransformActionRequest(actionAPIRequest *api.Action) (*proto.MediationServerMessage, error) {
 	// 1. Get the target entity type.
 	tSETypeString := actionAPIRequest.TargetEntityType
-	glog.V(3).Infof("tType :%s", tSETypeString)
+	glog.V(3).Infof("Target entity type is: %s", tSETypeString)
 	if tSETypeString == "" {
 		return nil, errors.New("Target entity type is not provided.")
 	}
@@ -60,6 +62,12 @@ func TransformActionRequest(actionAPIRequest *api.Action) (*proto.MediationServe
 			return nil, err
 		}
 		actionItemDTOBuilder.NewSE(newEntityDTO)
+	case proto.ActionItemDTO_PROVISION:
+		providerInfo, err := getScalingProvider(actionAPIRequest.ScaleSpec)
+		if err != nil {
+			return nil, err
+		}
+		actionItemDTOBuilder.Provider(providerInfo)
 	}
 	actionItemDTO, err := actionItemDTOBuilder.Build()
 	if err != nil {
@@ -92,7 +100,7 @@ func TransformActionRequest(actionAPIRequest *api.Action) (*proto.MediationServe
 }
 
 // Build the move action target based on the given move spec.
-func getMovingTarget(moveSpec *api.MoveSpec) (*proto.EntityDTO, error) {
+func getMovingTarget(moveSpec api.MoveSpec) (*proto.EntityDTO, error) {
 	glog.V(3).Infof("Move spec is %++v", moveSpec)
 	nSETypeString := moveSpec.DestinationEntityType
 	if nSETypeString == "" {
@@ -119,4 +127,20 @@ func getMovingTarget(moveSpec *api.MoveSpec) (*proto.EntityDTO, error) {
 		return nil, err
 	}
 	return newEntityDTO, nil
+}
+
+func getScalingProvider(scaleSpec api.ScaleSpec) (*proto.ActionItemDTO_ProviderInfo, error) {
+	glog.V(3).Infof("Scale spec is %++v", scaleSpec)
+	if scaleSpec.ProviderEntityType == "" || scaleSpec.ProviderEntityID == "" {
+		return nil, errors.New("Required provider info is missing or invalid.")
+	}
+
+	entityType, exist := entityTypeConverter[scaleSpec.ProviderEntityType]
+	if !exist {
+		return nil, fmt.Errorf("Provider entity type %s is not provide for scaling action.", entityType)
+	}
+	return &proto.ActionItemDTO_ProviderInfo{
+		EntityType: &entityType,
+		Ids:        []string{scaleSpec.ProviderEntityID},
+	}, nil
 }
