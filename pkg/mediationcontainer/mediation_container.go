@@ -3,12 +3,13 @@ package mediationcontainer
 import (
 	"errors"
 	"fmt"
+	"io"
 
 	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
+	"github.com/turbonomic/turbo-go-sdk/pkg/version"
 
 	"github.com/golang/glog"
 	goproto "github.com/golang/protobuf/proto"
-	"github.com/turbonomic/turbo-go-sdk/pkg/version"
 	"golang.org/x/net/websocket"
 )
 
@@ -31,28 +32,44 @@ type MediationContainer struct {
 }
 
 func NewMediationContainer(config *MediationContainerConfig) *MediationContainer {
+	return &MediationContainer{
+		config: config,
+		Status: StatusWaiting,
+
+		pipeline: initMediationContainerPipeline(),
+	}
+}
+
+// Initialize the mediation container communication pipeline.
+// For every new connection, the mediation container should first deal with version negotiation and registation.
+// Then it waits and process mediation client message.
+func initMediationContainerPipeline() *Pipeline {
 	pipeline := NewPipeline()
 	pipeline.Push(&negotiationMessageHandler{})
 	pipeline.Push(&registrationMessageHandler{})
 	pipeline.Push(&mediationClientMessageHandler{})
 
-	return &MediationContainer{
-		config: config,
-
-		Status: StatusWaiting,
-
-		pipeline: pipeline,
-	}
+	return pipeline
 }
 
 func (mc *MediationContainer) OnWebSocketConnected(ws *websocket.Conn) {
+	mc.config.StopChan = make(chan struct{})
+
 	mc.wsConn = ws
 	go mc.listenSend()
 	go mc.listenReceive()
-	go mc.handleReceivedMessage()
 	mc.Status = StatusReady
-	select {}
 
+	select {
+	case <-mc.config.StopChan:
+		glog.V(4).Info("Mediation container StopChan is received...Now stops everything")
+		return
+	}
+}
+
+func (mc *MediationContainer) Stop() {
+	glog.V(4).Info("Mediation container WebSocket is stopped explicitly")
+	close(mc.config.StopChan)
 }
 
 // Listening any message from client.
@@ -62,6 +79,8 @@ func (mc *MediationContainer) listenReceive() {
 	for {
 		select {
 		case <-mc.config.StopChan:
+			mc.Status = StatusClosed
+			glog.V(4).Infof("Mediation container stops listening receive channel.")
 			return
 		default:
 		}
@@ -69,11 +88,20 @@ func (mc *MediationContainer) listenReceive() {
 		var requestContent []byte
 		if err = websocket.Message.Receive(mc.wsConn, &requestContent); err != nil {
 			// If WebSocket connection get disconnected, stop the for-loop.
-			glog.Errorf("Error receive message: %s", err)
-			glog.Error("Client disconnected..")
-			return
+			if err == io.EOF {
+				glog.Warning("Client disconnected......")
+				mc.pipeline = initMediationContainerPipeline()
+				mc.Stop()
+
+				glog.V(4).Infof("Mediation container stops listening receive channel.")
+				glog.Warning("WebSockte has been reset. Waiting for reconnect......")
+				return
+			} else {
+				glog.Errorf("Error receive message: %s", err)
+			}
+		} else {
+			mc.handleReceivedMessage(requestContent)
 		}
-		mc.config.ReceiveMessageChan <- requestContent
 	}
 }
 
@@ -85,10 +113,9 @@ func (mc *MediationContainer) listenSend() {
 		select {
 		case <-mc.config.StopChan:
 			mc.Status = StatusClosed
+			glog.V(4).Infof("Mediation container stops listening send channel.")
 			return
 		case replyContent := <-mc.config.SendMessageChan:
-			glog.V(4).Infof("got message on SendMessageChan: %v", replyContent)
-
 			if mc.wsConn == nil {
 				glog.Error("websocket is not ready.")
 			}
@@ -126,62 +153,51 @@ func (mc *MediationContainer) ReceiveMediationClientMessage() <-chan *proto.Medi
 	return mc.config.MediationClientMessageChan
 }
 
-func (mc *MediationContainer) handleReceivedMessage() {
-	for {
-		select {
-		case <-mc.config.StopChan:
-			mc.Status = StatusClosed
-			return
-		case rawMessage, ok := <-mc.receiveMessage():
+func (mc *MediationContainer) handleReceivedMessage(rawMessage []byte) {
+	handler, err := mc.pipeline.Peek()
+	if err != nil {
+		glog.Errorf("Error handling raw client message: %s", err)
+		return
+	}
+	switch handler.(type) {
+	case *negotiationMessageHandler:
+		negotiationAnswer, err := handler.HandleRawMessage(rawMessage)
+		if err != nil {
+			glog.Errorf("Negotiation failed: %s", negotiationAnswer)
+			break
+		}
+		err = mc.SendServerMessage(negotiationAnswer)
+		if err != nil {
+			glog.Errorf("Failed to send negotiation response: %s", err)
+		} else {
+			// only handle version negotiation once.
+			mc.pipeline.Pop()
+		}
+	case *registrationMessageHandler:
+		registrationAck, err := handler.HandleRawMessage(rawMessage)
+		if err != nil {
+			glog.Errorf("Registration failed: %s", err)
+			break
+		}
+		glog.V(2).Info("Send out ACK")
+		err = mc.SendServerMessage(registrationAck)
+		if err != nil {
+			glog.Errorf("Failed to send negotiation response: %s", err)
+		} else {
+			// only handle registration once.
+			mc.pipeline.Pop()
+		}
+	case *mediationClientMessageHandler:
+		// Handle MediationClientMessages.
+		mediationClientMessage, err := handler.HandleRawMessage(rawMessage)
+		if err != nil {
+			glog.Errorf("%s", err)
+		} else {
+			msg, ok := mediationClientMessage.(*proto.MediationClientMessage)
 			if !ok {
-				// TODO status?
-				return
-			}
-			handler, err := mc.pipeline.Peek()
-			if err != nil {
-				glog.Errorf("Error handling raw client message: %s", err)
-				break
-			}
-			switch handler.(type) {
-			case *negotiationMessageHandler:
-				negotiationAnswer, err := handler.HandleRawMessage(rawMessage)
-				if err != nil {
-					glog.Errorf("Negotiation failed: %s", negotiationAnswer)
-					break
-				}
-				err = mc.SendServerMessage(negotiationAnswer)
-				if err != nil {
-					glog.Errorf("Failed to send negotiation response: %s", err)
-				} else {
-					// only handle version negotiation once.
-					mc.pipeline.Pop()
-				}
-			case *registrationMessageHandler:
-				registrationAck, err := handler.HandleRawMessage(rawMessage)
-				if err != nil {
-					glog.Errorf("Registration failed: %s", err)
-					break
-				}
-				err = mc.SendServerMessage(registrationAck)
-				if err != nil {
-					glog.Errorf("Failed to send negotiation response: %s", err)
-				} else {
-					// only handle registration once.
-					mc.pipeline.Pop()
-				}
-			case *mediationClientMessageHandler:
-				// Handle MediationClientMessages.
-				mediationClientMessage, err := handler.HandleRawMessage(rawMessage)
-				if err != nil {
-					glog.Errorf("%s", err)
-				} else {
-					msg, ok := mediationClientMessage.(*proto.MediationClientMessage)
-					if !ok {
-						glog.Errorf("Not a mediation client message: %s", err)
-					} else {
-						mc.config.MediationClientMessageChan <- msg
-					}
-				}
+				glog.Errorf("Not a mediation client message: %s", err)
+			} else {
+				mc.config.MediationClientMessageChan <- msg
 			}
 		}
 	}

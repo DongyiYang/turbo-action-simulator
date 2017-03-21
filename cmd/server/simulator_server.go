@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/pprof"
 
 	"github.com/turbonomic/turbo-simulator/pkg/mediationcontainer"
 	"github.com/turbonomic/turbo-simulator/pkg/rest"
@@ -43,18 +44,31 @@ func (s *SimulatorServer) Run() {
 		fmt.Println("A http connection.")
 	})
 
+	addProfiler(router)
+
 	// Register routes and handle function for http REST request.
 	for _, route := range rest.RoutesPaths {
 		router.HandleFunc(route.Path, restManager.HandleRequest)
-		//for _, method := range route.Method {
-		//	r.Methods(method)
-		//}
 	}
 
 	glog.V(2).Info("Turbo simulator is started.")
 
 	if err := http.ListenAndServe(":1234", router); err != nil {
-		log.Fatal("ListenAndServe:", err)
+		log.Fatalf("ListenAndServe with error: %s", err)
 	}
 	select {}
+}
+
+// Add profiler routes to router.
+func addProfiler(router *mux.Router) {
+	router.HandleFunc("/debug/pprof/", pprof.Index)
+	router.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	router.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	router.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+
+	// Manually add support for paths linked to by index page at /debug/pprof/
+	router.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+	router.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+	router.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+	router.Handle("/debug/pprof/block", pprof.Handler("block"))
 }
