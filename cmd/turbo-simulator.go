@@ -1,15 +1,12 @@
 package main
 
-import(
+import (
 	"flag"
 
 	"github.com/turbonomic/turbo-simulator/cmd/server"
-
 )
 
-
 func init() {
-
 	flag.Set("logtostderr", "true")
 }
 
