@@ -50,7 +50,7 @@ func (cb *CommodityDTOBuilder) Create() (*proto.CommodityDTO, error) {
 		Limit:         cb.limit,
 		Peak:          cb.peak,
 		Active:        cb.active,
-		Resizable:     cb.active,
+		Resizable:     cb.resizable,
 		DisplayName:   cb.displayName,
 		Thin:          cb.thin,
 		ComputedUsed:  cb.computedUsed,
@@ -96,6 +96,14 @@ func (cb *CommodityDTOBuilder) Used(used float64) *CommodityDTOBuilder {
 		return cb
 	}
 	cb.used = &used
+	return cb
+}
+
+func (cb *CommodityDTOBuilder) Reservation(reservation float64) *CommodityDTOBuilder {
+	if cb.err != nil {
+		return cb
+	}
+	cb.reservation = &reservation
 	return cb
 }
 

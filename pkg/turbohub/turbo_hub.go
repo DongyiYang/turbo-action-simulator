@@ -52,22 +52,34 @@ func (h *TurboHub) Run() {
 
 // Find the type of each APIObject, then distribute them accordingly.
 func (h *TurboHub) distributeAPIRequest(apiObj api.APIObject) error {
+	var serverMessage *proto.MediationServerMessage
 	switch apiObj.(type) {
 	case api.Action:
 		action := apiObj.(api.Action)
-		serverMessage, err := converter.TransformActionRequest(&action)
+		actionRequestMessage, err := converter.TransformActionRequest(&action)
 		if err != nil {
-			return fmt.Errorf("Failed to create mediation server message based on given action request: %s",
+			return fmt.Errorf("failed to create mediation server message based on given action request: %s",
 				err)
 		}
-		glog.V(4).Infof("Action request is generated: %++v", serverMessage)
-		err = h.sendServerMessage(serverMessage)
+		glog.V(4).Infof("Action request is generated: %++v", actionRequestMessage)
+		serverMessage = actionRequestMessage
+	case api.Discovery:
+		discovery := apiObj.(api.Discovery)
+		discoveryRequestMessage, err := converter.TransformDiscoveryRequest(&discovery)
 		if err != nil {
-			return fmt.Errorf("Failed to forward mediation server message from REST API to "+
-				"WebSocket: %s", err)
+			return fmt.Errorf("failed to create mediation server message based on given discovery "+
+				"request: %s", err)
 		}
+		glog.V(4).Infof("Discovery request is generated: %++v", discoveryRequestMessage)
+		serverMessage = discoveryRequestMessage
+
 	default:
-		glog.Errorf("API object type %s is not supported", reflect.TypeOf(apiObj))
+		return fmt.Errorf("API object type %s is not supported", reflect.TypeOf(apiObj))
+	}
+	err := h.sendServerMessage(serverMessage)
+	if err != nil {
+		return fmt.Errorf("failed to forward mediation server message from REST API to "+
+			"WebSocket: %s", err)
 	}
 	return nil
 }

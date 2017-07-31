@@ -41,3 +41,8 @@ type ProviderInfo struct {
 	ProviderEntityType string `json:"providerEntityType,omitempty"`
 	ProviderEntityID   string `json:"providerEntityID,omitempty"`
 }
+
+type Discovery struct {
+	ProbeType     string               `json:"probeType,omitempty"`
+	AccountValues []proto.AccountValue `json:"accountValues,omitempty"`
+}

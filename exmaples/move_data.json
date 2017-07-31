@@ -1,0 +1,10 @@
+{
+  "type":"move",
+  "entityType":"Pod",
+  "probeType":"Minikube",
+  "entityID":"d37f9d1a-3f2c-11e7-b421-080027bbb7dc",
+  "moveSpec":{
+    "destinationEntityType":"VirtualMachine",
+    "destinationIP":"192.168.99.100"
+  }
+}

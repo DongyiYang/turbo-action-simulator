@@ -144,3 +144,21 @@ func getScalingProvider(scaleSpec api.ScaleSpec) (*proto.ActionItemDTO_ProviderI
 		Ids:        []string{scaleSpec.ProviderEntityID},
 	}, nil
 }
+
+func TransformDiscoveryRequest(discoveryAPIRequest *api.Discovery) (*proto.MediationServerMessage, error) {
+	accountValues := []*proto.AccountValue{}
+	for _, v := range discoveryAPIRequest.AccountValues {
+		value := v
+		accountValues = append(accountValues, &value)
+	}
+	discoveryRequest := &proto.DiscoveryRequest{
+		ProbeType:    &discoveryAPIRequest.ProbeType,
+		AccountValue: accountValues,
+	}
+
+	// TODO message ID is a random number in [0, 1000).
+	messageID := rand.Int31n(1000)
+	serverMessage := turbomessage.NewMediationServerMessageBuilder(messageID).
+		DiscoveryRequest(discoveryRequest).Build()
+	return serverMessage, nil
+}

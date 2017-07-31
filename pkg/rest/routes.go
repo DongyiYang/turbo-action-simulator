@@ -13,6 +13,10 @@ func init() {
 			"/api/actions/{id}",
 			[]string{"GET", "DELETE"},
 		},
+		{
+			"/api/discovery",
+			[]string{"POST"},
+		},
 	}
 }
 

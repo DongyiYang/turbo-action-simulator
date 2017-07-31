@@ -20,7 +20,7 @@ import (
 type TurboHandleFunc func(w http.ResponseWriter, r *http.Request) error
 
 type APIHandler struct {
-	handlers               map[string]TurboHandleFunc
+	handlers map[string]TurboHandleFunc
 
 	apiObjectGeneratorChan chan api.APIObject
 }
@@ -32,6 +32,7 @@ func NewAPIHandler(apiObjectGeneratorChan chan api.APIObject) *APIHandler {
 	// register handlers
 	handlers := make(map[string]TurboHandleFunc)
 	handlers["actions"] = apiHandler.handleActionRequest
+	handlers["discovery"] = apiHandler.handleDiscoveryRequest
 
 	apiHandler.handlers = handlers
 	return apiHandler
@@ -108,6 +109,36 @@ func (h *APIHandler) handleActionRequest(w http.ResponseWriter, r *http.Request)
 		return nil
 	case "DELETE":
 		// TODO delete msg.
+		return nil
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+		return fmt.Errorf("Unsupported method %s", r.Method)
+	}
+}
+
+// Handle action related API requests.
+func (h *APIHandler) handleDiscoveryRequest(w http.ResponseWriter, r *http.Request) error {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	switch r.Method {
+	case "POST":
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return fmt.Errorf("Cannot create discovery request from API: %s", err)
+		}
+		if err := r.Body.Close(); err != nil {
+			return fmt.Errorf("Cannot create discovery request from API: %s", err)
+		}
+
+		var discoveryRequest api.Discovery
+		if err := json.Unmarshal(body, &discoveryRequest); err != nil {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			if err := json.NewEncoder(w).Encode(err); err != nil {
+				return fmt.Errorf("Cannot encode error message: %s", err)
+			}
+		}
+		glog.V(3).Infof("Created a new discovery request from REST API: %++v", discoveryRequest)
+
+		h.apiObjectGeneratorChan <- discoveryRequest
 		return nil
 	default:
 		w.WriteHeader(http.StatusBadRequest)
