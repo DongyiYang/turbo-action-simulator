@@ -5,4 +5,5 @@ type APIObject interface {
 }
 
 // register
-func (Action) IsAPIObject(){}
+func (Action) IsAPIObject()           {}
+func (Discovery) IsAPIObject() {}
