@@ -6,13 +6,10 @@ import (
 	"github.com/turbonomic/turbo-simulator/cmd/server"
 )
 
-func init() {
-	flag.Set("logtostderr", "true")
-}
-
 func main() {
-	flag.Parse()
 
-	ss := &server.SimulatorServer{}
+	ss := server.NewSimulatorServer()
+	ss.AddFlags()
+	flag.Parse()
 	ss.Run()
 }
