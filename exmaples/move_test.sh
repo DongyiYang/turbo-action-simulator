@@ -22,7 +22,7 @@ function do_move {
     fi
 }
 
-do_move
+#do_move
 
 do_move ./move2_data.json
 

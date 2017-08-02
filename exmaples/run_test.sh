@@ -2,7 +2,7 @@
 set -x
 
 host=localhost
-port=8087
+port=18087
 url="http://$host:$port/api/discovery"
 
 discovery=discovery_data.json
