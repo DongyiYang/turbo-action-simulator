@@ -1,5 +1,8 @@
 OUTPUT_DIR=./_output
 
+product: clean
+	env GOOS=linux GOARCH=amd64 go build -o ${OUTPUT_DIR}/turbo-simulator.linux ./cmd/turbo-simulator.go
+
 build: clean
 	go build -o ${OUTPUT_DIR}/turbo-simulator ./cmd/turbo-simulator.go
 

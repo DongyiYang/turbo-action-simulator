@@ -41,7 +41,7 @@ func NewMediationContainer(config *MediationContainerConfig) *MediationContainer
 }
 
 // Initialize the mediation container communication pipeline.
-// For every new connection, the mediation container should first deal with version negotiation and registation.
+// For every new connection, the mediation container should first deal with version negotiation and registration.
 // Then it waits and process mediation client message.
 func initMediationContainerPipeline() *Pipeline {
 	pipeline := NewPipeline()

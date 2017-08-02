@@ -1,8 +1,9 @@
 package server
 
 import (
+	"flag"
 	"fmt"
-	"log"
+	"io"
 	"net/http"
 	"net/http/pprof"
 
@@ -16,7 +17,27 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-type SimulatorServer struct{}
+const (
+	defaultPort = 8087
+)
+
+type SimulatorServer struct {
+	port int
+}
+
+func NewSimulatorServer() *SimulatorServer {
+	return &SimulatorServer{
+		port: defaultPort,
+	}
+}
+
+func (s *SimulatorServer) AddFlags() {
+	flag.IntVar(&s.port, "port", defaultPort, "the port for websocket")
+
+	//set default log level=3
+	flag.Set("v", "3")
+	flag.Set("logtostderr", "true")
+}
 
 func (s *SimulatorServer) Run() {
 	config := mediationcontainer.NewMediationContainerConfig()
@@ -41,7 +62,8 @@ func (s *SimulatorServer) Run() {
 	})
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("A http connection.")
+		glog.V(2).Info("a http connection.")
+		io.WriteString(w, "Hello world")
 	})
 
 	addProfiler(router)
@@ -51,10 +73,11 @@ func (s *SimulatorServer) Run() {
 		router.HandleFunc(route.Path, restManager.HandleRequest)
 	}
 
-	glog.V(2).Info("Turbo simulator is started.")
+	addr := fmt.Sprintf(":%v", s.port)
+	glog.V(2).Infof("Turbo simulator is started, listening on [%s].", addr)
 
-	if err := http.ListenAndServe(":1234", router); err != nil {
-		log.Fatalf("ListenAndServe with error: %s", err)
+	if err := http.ListenAndServe(addr, router); err != nil {
+		glog.Fatalf("ListenAndServe with error: %s", err)
 	}
 	select {}
 }
